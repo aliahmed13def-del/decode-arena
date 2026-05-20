@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: #0a0a0f;
+      color: #cccccc;
+      min-height: 100vh;
+    }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      background: #111118;
+      border-bottom: 0.5px solid #00ff8833;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-title {
+      font-size: 14px;
+      color: #00ff88;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .countdown-pill {
+      font-size: 11px;
+      color: #555;
+      letter-spacing: 1px;
+      border: 0.5px solid #333;
+      padding: 5px 12px;
+      border-radius: 20px;
+    }
+
+    .countdown-pill span {
+      color: #00ff88;
+      font-weight: bold;
+    }
+
+    .back-btn {
+      font-size: 11px;
+      color: #555;
+      text-decoration: none;
+      letter-spacing: 1px;
+      border: 0.5px solid #333;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover { color: #00ff88; border-color: #00ff88; }
+
+    .main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+
+    /* ── TOP 3 PODIUM ── */
+    .podium {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 28px;
+      align-items: end;
+    }
+
+    .podium-card {
+      background: #111118;
+      border: 0.5px solid #222;
+      border-radius: 12px;
+      padding: 20px 16px;
+      text-align: center;
+      position: relative;
+      transition: transform 0.2s;
+    }
+
+    .podium-card:hover { transform: translateY(-2px); }
+
+    .podium-card.rank-1 {
+      border-color: #ffd70044;
+      background: linear-gradient(180deg, #ffd70008 0%, #111118 100%);
+      padding-top: 28px;
+    }
+
+    .podium-card.rank-2 {
+      border-color: #c0c0c022;
+    }
+
+    .podium-card.rank-3 {
+      border-color: #cd7f3222;
+    }
+
+    .medal {
+      font-size: 28px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .podium-name {
+      font-size: 12px;
+      color: #cccccc;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+
+    .podium-score {
+      font-size: 26px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .rank-1 .podium-score { color: #ffd700; }
+    .rank-2 .podium-score { color: #c0c0c0; }
+    .rank-3 .podium-score { color: #cd7f32; }
+
+    .podium-trail {
+      font-size: 10px;
+      color: #555;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .podium-puzzles {
+      font-size: 11px;
+      color: #444;
+    }
+
+    /* ── TRAIL FILTER ── */
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .filter-btn {
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 1px;
+      cursor: pointer;
+      border: 0.5px solid #333;
+      background: transparent;
+      color: #555;
+      transition: all 0.15s;
+    }
+
+    .filter-btn:hover { color: #ccc; border-color: #555; }
+    .filter-btn.active { background: #00ff8822; color: #00ff88; border-color: #00ff8844; }
+
+    /* ── FULL TABLE ── */
+    .table-card {
+      background: #111118;
+      border: 0.5px solid #222;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .table-header {
+      display: grid;
+      grid-template-columns: 55px 1fr 90px 90px 90px;
+      padding: 12px 20px;
+      background: #0a0a0f;
+      border-bottom: 0.5px solid #222;
+      font-size: 10px;
+      color: #444;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .table-row {
+      display: grid;
+      grid-template-columns: 55px 1fr 90px 90px 90px;
+      padding: 14px 20px;
+      border-bottom: 0.5px solid #1a1a1a;
+      align-items: center;
+      transition: background 0.15s;
+      cursor: default;
+    }
+
+    .table-row:last-child { border-bottom: none; }
+    .table-row:hover { background: #ffffff05; }
+
+    .table-row.my-team {
+      background: #00ff8808;
+      border-left: 2px solid #00ff88;
+    }
+
+    .rank-cell {
+      font-size: 13px;
+      font-weight: bold;
+      color: #444;
+    }
+
+    .rank-cell.gold   { color: #ffd700; }
+    .rank-cell.silver { color: #c0c0c0; }
+    .rank-cell.bronze { color: #cd7f32; }
+
+    .name-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .team-name-text {
+      font-size: 13px;
+      color: #cccccc;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .you-badge {
+      font-size: 9px;
+      padding: 2px 7px;
+      background: #00ff8822;
+      color: #00ff88;
+      border: 0.5px solid #00ff8844;
+      border-radius: 20px;
+      letter-spacing: 1px;
+    }
+
+    .trail-pill {
+      font-size: 9px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+    }
+
+    .pill-Green { background: #00ff8815; color: #00ff88; border: 0.5px solid #00ff8830; }
+    .pill-Blue  { background: #0088ff15; color: #0088ff; border: 0.5px solid #0088ff30; }
+    .pill-Red   { background: #ff003315; color: #ff5555; border: 0.5px solid #ff003330; }
+
+    .score-cell {
+      font-size: 15px;
+      font-weight: bold;
+      color: #00ff88;
+      text-align: right;
+    }
+
+    .puzzles-cell {
+      font-size: 12px;
+      color: #555;
+      text-align: right;
+    }
+
+    .status-cell {
+      text-align: right;
+    }
+
+    .status-active {
+      font-size: 10px;
+      color: #00ff88;
+      letter-spacing: 1px;
+    }
+
+    .status-done {
+      font-size: 10px;
+      color: #ffd700;
+      letter-spacing: 1px;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 10px;
+      color: #333;
+      letter-spacing: 1px;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .table-row { animation: fadeIn 0.3s ease forwards; }
+  </style>
+
+  <script>
+    // Auto refresh countdown
+    var secs = 30;
+    setInterval(function() {
+      secs--;
+      var el = document.getElementById('countdown');
+      if (el) el.textContent = secs;
+      if (secs <= 0) location.reload();
+    }, 1000);
+
+    // Trail filter
+    function filterTrail(trail) {
+      var rows = document.querySelectorAll('.table-row');
+      rows.forEach(function(row) {
+        if (trail === 'All' || row.dataset.trail === trail) {
+          row.style.display = 'grid';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+      document.querySelectorAll('.filter-btn').forEach(function(btn) {
+        btn.classList.remove('active');
+      });
+      document.getElementById('filter-' + trail).classList.add('active');
+    }
+  </script>
+</head>
+<body>
+
+<div class="navbar">
+  <span class="nav-title">🏴 Leaderboard</span>
+  <div class="nav-right">
+    <div class="countdown-pill">
+      Refreshing in <span id="countdown">30</span>s
+    </div>
+    <a href="/dashboard" class="back-btn">← Back to Hunt</a>
+  </div>
+</div>
+
+<div class="main">
+
+  {% if teams %}
+
+  <!-- TOP 3 PODIUM -->
+  <div class="podium">
+    {% for team in teams[:3] %}
+    <div class="podium-card rank-{{ loop.index }}">
+      <span class="medal">
+        {{ '🥇' if loop.index == 1 else '🥈' if loop.index == 2 else '🥉' }}
+      </span>
+      <div class="podium-name">{{ team['team_name'] }}</div>
+      <div class="podium-score">{{ "%.1f"|format(team['score']) }}</div>
+      <div class="podium-trail">{{ team['trail'] }} Trail</div>
+      <div class="podium-puzzles">{{ team['puzzles_solved'] }} puzzles solved</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- TRAIL FILTER -->
+  <div class="filter-row">
+    <button class="filter-btn active" id="filter-All"
+            onclick="filterTrail('All')">All Trails</button>
+    <button class="filter-btn" id="filter-Green"
+            onclick="filterTrail('Green')">🟢 Green</button>
+    <button class="filter-btn" id="filter-Blue"
+            onclick="filterTrail('Blue')">🔵 Blue</button>
+    <button class="filter-btn" id="filter-Red"
+            onclick="filterTrail('Red')">🔴 Red</button>
+  </div>
+
+  <!-- FULL TABLE -->
+  <div class="table-card">
+    <div class="table-header">
+      <span>Rank</span>
+      <span>Team</span>
+      <span style="text-align:right">Score</span>
+      <span style="text-align:right">Puzzles</span>
+      <span style="text-align:right">Status</span>
+    </div>
+
+    {% for team in teams %}
+    <div class="table-row
+         {{ 'my-team' if team['team_name'] == session.get('team_name','') }}"
+         data-trail="{{ team['trail'] }}">
+
+      <span class="rank-cell
+            {{ 'gold' if loop.index == 1 else
+               'silver' if loop.index == 2 else
+               'bronze' if loop.index == 3 else '' }}">
+        #{{ loop.index }}
+      </span>
+
+      <div class="name-cell">
+        <span class="team-name-text">{{ team['team_name'] }}</span>
+        {% if team['team_name'] == session.get('team_name','') %}
+        <span class="you-badge">YOU</span>
+        {% endif %}
+        <span class="trail-pill pill-{{ team['trail'] }}">
+          {{ team['trail'] }}
+        </span>
+      </div>
+
+      <span class="score-cell">{{ "%.1f"|format(team['score']) }}</span>
+
+      <span class="puzzles-cell">{{ team['puzzles_solved'] }}</span>
+
+      <span class="status-cell">
+        {% if team['puzzles_solved'] >= 11 %}
+        <span class="status-done">COMPLETE</span>
+        {% else %}
+        <span class="status-active">ACTIVE</span>
+        {% endif %}
+      </span>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  {% endif %}
+
+  <div class="footer">
+    2026 · DecodeArena
+  </div>
+
+</div>
+</body>
+</html>

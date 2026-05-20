@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — {{ team['team_name'] }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: #0a0a0f;
+      color: #cccccc;
+      min-height: 100vh;
+    }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      background: #111118;
+      border-bottom: 0.5px solid #00ff8825;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+
+    .navbar-left { display: flex; align-items: center; gap: 14px; }
+
+    .nav-title {
+      font-size: 18px;
+      color: #00ff88;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .trail-badge {
+      font-size: 13px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    .trail-Green { background: #00ff8815; color: #00ff88; border: 0.5px solid #00ff8830; }
+    .trail-Blue  { background: #0088ff15; color: #0088ff; border: 0.5px solid #0088ff30; }
+    .trail-Red   { background: #ff003315; color: #ff5555; border: 0.5px solid #ff003330; }
+
+    .navbar-right { display: flex; align-items: center; gap: 20px; }
+
+    .timer-display {
+      text-align: center;
+      padding: 10px 32px;
+      border: 0.5px solid #1a1a1a;
+      border-radius: 14px;
+      background: #0a0a0f;
+    }
+    .timer-status-label {
+      font-size: 12px;
+      color: #444;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .timer-num {
+      font-size: 48px;
+      font-weight: bold;
+      letter-spacing: 6px;
+      line-height: 1;
+    }
+    .timer-waiting { color: #444; }
+    .timer-running { color: #00ff88; }
+    .timer-ended   { color: #ff5555; }
+
+    .score-display { text-align: right; }
+    .score-num {
+      font-size: 28px;
+      font-weight: bold;
+      color: #00ff88;
+      line-height: 1;
+    }
+    .score-lbl {
+      font-size: 11px;
+      color: #444;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .nav-btn {
+      font-size: 13px;
+      color: #555;
+      text-decoration: none;
+      letter-spacing: 1px;
+      border: 0.5px solid #222;
+      padding: 8px 16px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover { color: #00ff88; border-color: #00ff8844; }
+
+    /* ── MAIN ── */
+    .main {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 32px 48px;
+    }
+
+    /* ── HEADER ROW ── */
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .team-info h2 {
+      font-size: 28px;
+      color: #cccccc;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+    .team-info p {
+      font-size: 14px;
+      color: #555;
+      letter-spacing: 2px;
+      margin-top: 6px;
+    }
+
+    .points-badge {
+      text-align: center;
+      background: #111118;
+      border: 0.5px solid #00ff8830;
+      border-radius: 14px;
+      padding: 18px 32px;
+    }
+    .points-num {
+      font-size: 48px;
+      font-weight: bold;
+      color: #00ff88;
+      line-height: 1;
+    }
+    .points-lbl {
+      font-size: 11px;
+      color: #444;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    /* ── STAGE GRID ── */
+    .grid-section {
+      background: #111118;
+      border: 0.5px solid #1a1a1a;
+      border-radius: 16px;
+      padding: 36px;
+      margin-bottom: 24px;
+    }
+
+    .grid-label {
+      font-size: 14px;
+      color: #444;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    .stage-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .stage-tile {
+      background: #0a0a0f;
+      border: 0.5px solid #1a1a1a;
+      border-radius: 14px;
+      padding: 40px 14px;
+      text-align: center;
+      cursor: default;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* DONE */
+    .stage-tile.done {
+      background: #00ff8808;
+      border-color: #00ff8840;
+      cursor: pointer;
+    }
+    .stage-tile.done:hover {
+      border-color: #00ff8870;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px #00ff8815;
+    }
+    .stage-tile.done .tile-icon { color: #00ff88; }
+    .stage-tile.done .tile-num  { color: #00ff8860; }
+    .stage-tile.done .tile-name { color: #00ff8888; }
+
+    /* ACTIVE */
+    .stage-tile.active {
+      background: #00ff8810;
+      border-color: #00ff8866;
+      cursor: pointer;
+      box-shadow: 0 0 20px #00ff8820;
+      animation: tilePulse 2s ease-in-out infinite;
+    }
+    .stage-tile.active:hover { transform: translateY(-3px); }
+    .stage-tile.active .tile-icon { color: #00ff88; }
+    .stage-tile.active .tile-num  { color: #00ff88; }
+    .stage-tile.active .tile-name { color: #00ff88; }
+
+    .stage-tile.active::after {
+      content: '';
+      position: absolute;
+      top: 9px; right: 9px;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #00ff88;
+      box-shadow: 0 0 10px #00ff88;
+    }
+
+    /* LOCKED */
+    .stage-tile.locked { opacity: 0.35; cursor: not-allowed; }
+
+    @keyframes tilePulse {
+      0%, 100% { box-shadow: 0 0 12px #00ff8820; }
+      50%       { box-shadow: 0 0 28px #00ff8845; }
+    }
+
+    .tile-icon { font-size: 34px; margin-bottom: 14px; }
+    .tile-num  {
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    .tile-name {
+      font-size: 14px;
+      color: #333;
+      letter-spacing: 0.5px;
+      line-height: 1.4;
+    }
+
+    /* ── BOSS CARD ── */
+    .boss-divider {
+      font-size: 11px;
+      color: #333;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      text-align: center;
+      margin: 20px 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .boss-divider::before,
+    .boss-divider::after {
+      content: '';
+      flex: 1;
+      height: 0.5px;
+      background: #1a1a1a;
+    }
+
+    .boss-tile {
+      background: #0a0a0f;
+      border: 0.5px solid #222;
+      border-radius: 14px;
+      padding: 36px 36px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      cursor: default;
+      transition: all 0.2s;
+    }
+    .boss-tile.locked  { opacity: 0.3; }
+    .boss-tile.active  {
+      background: #ffd70008;
+      border-color: #ffd70040;
+      cursor: pointer;
+      box-shadow: 0 0 24px #ffd70012;
+    }
+    .boss-tile.active:hover { transform: translateY(-2px); }
+    .boss-tile.done {
+      background: #ffd70008;
+      border-color: #ffd70030;
+      cursor: pointer;
+    }
+
+    .boss-icon { font-size: 52px; flex-shrink: 0; }
+    .boss-info { flex: 1; }
+    .boss-label {
+      font-size: 13px;
+      color: #444;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .boss-title {
+      font-size: 22px;
+      color: #555;
+      letter-spacing: 1px;
+    }
+    .boss-tile.active .boss-title  { color: #ffd700; }
+    .boss-tile.done   .boss-title  { color: #ffd70088; }
+    .boss-lock { font-size: 26px; }
+
+    /* ── OVERLAY ── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: #0a0a0fcc;
+      backdrop-filter: blur(6px);
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .overlay.open { display: flex; }
+
+    .modal {
+      background: #111118;
+      border: 0.5px solid #00ff8830;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 680px;
+      max-height: 92vh;
+      overflow-y: auto;
+      position: relative;
+      animation: modalIn 0.25s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(12px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-header {
+      padding: 26px 30px 20px;
+      border-bottom: 0.5px solid #1a1a1a;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .modal-stage-label {
+      font-size: 11px;
+      color: #444;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+    .modal-title {
+      font-size: 22px;
+      color: #00ff88;
+      letter-spacing: 1px;
+    }
+    .modal-badges { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+    .badge {
+      font-size: 12px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+    }
+    .badge-digital  { background: #0088ff15; color: #0088ff; border: 0.5px solid #0088ff30; }
+    .badge-physical { background: #ff880015; color: #ff8800; border: 0.5px solid #ff880030; }
+    .badge-pts      { background: #00ff8815; color: #00ff88; border: 0.5px solid #00ff8830; }
+    .badge-boss     { background: #ffd70015; color: #ffd700; border: 0.5px solid #ffd70030; }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: #444;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 2px 8px;
+      line-height: 1;
+      transition: color 0.15s;
+      margin-left: 14px;
+      flex-shrink: 0;
+    }
+    .close-btn:hover { color: #ff5555; }
+
+    .modal-body { padding: 26px 30px 30px; }
+
+    .puzzle-text {
+      background: #0a0a0f;
+      border: 0.5px solid #1a1a1a;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 18px;
+      font-size: 15px;
+      color: #bbbbbb;
+      line-height: 1.9;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .drive-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: #00ff88;
+      text-decoration: none;
+      border: 0.5px solid #00ff8844;
+      padding: 14px 22px;
+      border-radius: 10px;
+      font-size: 15px;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+      margin: 6px 0;
+    }
+    .drive-link:hover {
+      background: #00ff8810;
+      box-shadow: 0 0 14px #00ff8822;
+      transform: translateX(4px);
+    }
+
+    .hint-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: #ffd70008;
+      border: 0.5px solid #ffd70022;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+    }
+    .hint-icon { font-size: 18px; flex-shrink: 0; }
+    .hint-text {
+      font-size: 14px;
+      color: #888;
+      font-style: italic;
+      letter-spacing: 0.5px;
+      line-height: 1.6;
+    }
+
+    .answer-label {
+      font-size: 12px;
+      color: #444;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .answer-row { display: flex; gap: 12px; }
+    .answer-input {
+      flex: 1;
+      padding: 16px 20px;
+      background: #0a0a0f;
+      border: 0.5px solid #222;
+      border-radius: 12px;
+      color: #00ff88;
+      font-family: 'Courier New', monospace;
+      font-size: 16px;
+      letter-spacing: 1px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .answer-input:focus { border-color: #00ff8844; box-shadow: 0 0 12px #00ff8812; }
+    .answer-input::placeholder { color: #333; }
+
+    .submit-btn {
+      padding: 16px 28px;
+      background: #00ff88;
+      color: #0a0a0f;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .submit-btn:hover {
+      background: #00dd77;
+      box-shadow: 0 0 20px #00ff8840;
+      transform: translateY(-1px);
+    }
+
+    .message {
+      margin-top: 16px;
+      padding: 16px 20px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    .msg-correct {
+      background: #00ff8812;
+      color: #00ff88;
+      border: 0.5px solid #00ff8830;
+      animation: slideIn 0.3s ease;
+    }
+    .msg-wrong {
+      background: #ff003312;
+      color: #ff5555;
+      border: 0.5px solid #ff003330;
+      animation: shake 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25%       { transform: translateX(-5px); }
+      75%       { transform: translateX(5px); }
+    }
+
+    .done-notice {
+      background: #00ff8808;
+      border: 0.5px solid #00ff8820;
+      border-radius: 10px;
+      padding: 16px 20px;
+      font-size: 14px;
+      color: #00ff8866;
+      letter-spacing: 1px;
+      text-align: center;
+      margin-top: 14px;
+    }
+
+    /* ── COMPLETED CARD ── */
+    .completed-card {
+      background: #00ff8808;
+      border: 0.5px solid #00ff8830;
+      border-radius: 16px;
+      padding: 60px 24px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .completed-card .trophy { font-size: 64px; margin-bottom: 20px; }
+    .completed-card h2 {
+      font-size: 26px;
+      color: #00ff88;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .completed-card p { font-size: 16px; color: #555; letter-spacing: 1px; }
+
+    /* ── LOG ── */
+    .log-card {
+      background: #111118;
+      border: 0.5px solid #1a1a1a;
+      border-radius: 14px;
+      padding: 22px 26px;
+      margin-bottom: 24px;
+    }
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .log-title  { font-size: 12px; color: #444; letter-spacing: 2px; text-transform: uppercase; }
+    .log-count  { font-size: 12px; color: #333; letter-spacing: 1px; }
+    .log-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 20px;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 0.5px solid #1a1a1a;
+      font-size: 14px;
+    }
+    .log-item:last-child { border-bottom: none; }
+    .log-ans  { color: #666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .log-ok   { color: #00ff88; font-weight: bold; letter-spacing: 1px; }
+    .log-fail { color: #ff5555; font-weight: bold; letter-spacing: 1px; }
+    .log-time { color: #2a2a2a; font-size: 12px; white-space: nowrap; }
+
+    /* ── BOTTOM NAV ── */
+    .bottom-nav { display: flex; gap: 12px; }
+    .bottom-btn {
+      flex: 1;
+      display: block;
+      text-align: center;
+      padding: 16px;
+      background: transparent;
+      border: 0.5px solid #1a1a1a;
+      border-radius: 10px;
+      color: #444;
+      text-decoration: none;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+    .bottom-btn:hover { border-color: #00ff8830; color: #00ff88; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <div class="navbar-left">
+    <span class="nav-title">🏴 Hunt</span>
+    <span class="trail-badge trail-{{ team['trail'] }}">{{ team['trail'] }} Trail</span>
+  </div>
+
+  <div class="timer-display" id="timerDisplay">
+    <div class="timer-status-label" id="timerLabel">
+      {% if event_status == 'waiting' %}⏳ Waiting...
+      {% elif event_status == 'ended' %}🔴 Hunt Ended
+      {% else %}⏱️ Time Left{% endif %}
+    </div>
+    <div class="timer-num {{ 'timer-waiting' if event_status == 'waiting' else 'timer-ended' if event_status == 'ended' else 'timer-running' }}" id="timerNum">
+      {{ '%02d'|format(time_remaining // 3600) }}:{{ '%02d'|format((time_remaining % 3600) // 60) }}:{{ '%02d'|format(time_remaining % 60) }}
+    </div>
+  </div>
+
+  <div class="navbar-right">
+    <div class="score-display">
+      <div class="score-num">{{ "%.1f"|format(team['score']) }}</div>
+      <div class="score-lbl">Score</div>
+    </div>
+    <a href="/leaderboard" class="nav-btn">Leaderboard</a>
+    <a href="/logout" class="nav-btn">Logout</a>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- HEADER -->
+  <div class="header-row">
+    <div class="team-info">
+      <h2>{{ team['team_name'] }}</h2>
+      <p>{{ team['trail'] }} Trail · Stage {{ team['current_stage'] }} of 11</p>
+    </div>
+    <div class="points-badge">
+      <div class="points-num">{{ "%.0f"|format(team['score']) }}</div>
+      <div class="points-lbl">Points</div>
+    </div>
+  </div>
+
+  <!-- STAGE GRID -->
+  {% if puzzle or team['current_stage'] > 11 %}
+  <div class="grid-section">
+    <div class="grid-label">Mission Stages</div>
+
+    <div class="stage-grid">
+      {% for i in range(1, 11) %}
+      {% set tile_state = 'done' if i < team['current_stage'] else 'active' if i == team['current_stage'] else 'locked' %}
+      <div class="stage-tile {{ tile_state }}" onclick="{{ 'openModal(' + i|string + ')' if tile_state != 'locked' else '' }}">
+        <div class="tile-icon">
+          {% if tile_state == 'done' %}✓
+          {% elif tile_state == 'active' %}◈
+          {% else %}🔒{% endif %}
+        </div>
+        <div class="tile-num">Stage {{ i }}</div>
+        <div class="tile-name">{{ stage_names[i] if i in stage_names else 'Stage ' + i|string }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="boss-divider">Final Challenge</div>
+
+    {% set boss_state = 'done' if team['current_stage'] > 11 else 'active' if team['current_stage'] == 11 else 'locked' %}
+    <div class="boss-tile {{ boss_state }}" onclick="{{ 'openModal(11)' if boss_state != 'locked' else '' }}">
+      <div class="boss-icon">👾</div>
+      <div class="boss-info">
+        <div class="boss-label">Boss Level</div>
+        <div class="boss-title">Protocol Zero — Complete all stages to unlock</div>
+      </div>
+      <div class="boss-lock">{{ '✓' if boss_state == 'done' else '🔐' if boss_state == 'locked' else '⚡' }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- COMPLETED -->
+  {% if not puzzle and team['current_stage'] > 11 %}
+  <div class="completed-card">
+    <div class="trophy">🏆</div>
+    <h2>Mission Complete!</h2>
+    <p>Final Score: {{ "%.1f"|format(team['score']) }} points</p>
+  </div>
+  {% endif %}
+
+  <!-- SUBMISSION LOG -->
+  {% if logs %}
+  <div class="log-card">
+    <div class="log-header">
+      <span class="log-title">Submission Log</span>
+      <span class="log-count">{{ logs|length }} attempts</span>
+    </div>
+    {% for log in logs %}
+    <div class="log-item">
+      <span class="log-ans">{{ log['answer_given'] }}</span>
+      <span class="{{ 'log-ok' if log['is_correct'] else 'log-fail' }}">{{ 'Correct' if log['is_correct'] else 'Wrong' }}</span>
+      <span class="log-time">{{ log['submitted_at'] }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="bottom-nav">
+    <a href="/leaderboard" class="bottom-btn">🏆 Leaderboard</a>
+    <a href="/logout" class="bottom-btn">← Logout</a>
+  </div>
+
+</div>
+
+<!-- ── PUZZLE MODAL OVERLAY ── -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-stage-label" id="modalStageLabel">Stage</div>
+        <div class="modal-title" id="modalTitle">Loading...</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="modal-badges" id="modalBadges"></div>
+        <button class="close-btn" onclick="closeModal()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <!-- injected by JS -->
+    </div>
+  </div>
+</div>
+
+<script>
+  var currentStage = {{ team['current_stage'] }};
+  var timeRemaining = {{ time_remaining }};
+  var eventStatus = '{{ event_status }}';
+
+  {% if puzzle %}
+  var activePuzzle = {
+    stage: {{ puzzle['stage'] }},
+    question: {{ puzzle['question'] | tojson }},
+    hint: {{ (puzzle['hint'] or '') | tojson }},
+    points: {{ puzzle['points'] }},
+    is_physical: {{ puzzle['is_physical'] }},
+    is_boss: {{ 1 if puzzle['stage'] == 11 else 0 }}
+  };
+  {% else %}
+  var activePuzzle = null;
+  {% endif %}
+
+  {% if message is defined and message %}
+  var flashMessage = {{ message | tojson }};
+  var flashCorrect = {{ 'true' if is_correct else 'false' }};
+  {% else %}
+  var flashMessage = null;
+  var flashCorrect = false;
+  {% endif %}
+
+  var stageNames = { {% for stage, name in stage_names.items() %}{{ stage }}: {{ name | tojson }}{% if not loop.last %}, {% endif %}{% endfor %} };
+
+  function openModal(stage) {
+    if (stage !== currentStage && stage > currentStage) return;
+
+    var overlay = document.getElementById('overlay');
+    var label   = document.getElementById('modalStageLabel');
+    var title   = document.getElementById('modalTitle');
+    var badges  = document.getElementById('modalBadges');
+    var body    = document.getElementById('modalBody');
+
+    var isBoss = (stage === 11);
+    label.textContent = isBoss ? 'Boss Level' : 'Stage ' + stage;
+
+    var name = stageNames[stage] || ('Stage ' + stage);
+    title.textContent = isBoss ? '👾 ' + name : (stage < currentStage ? '✓ ' + name : name);
+    title.style.color = isBoss ? '#ffd700' : '#00ff88';
+
+    if (isBoss) {
+      badges.innerHTML = '<span class="badge badge-boss">Boss</span>';
+    } else if (activePuzzle && stage === currentStage) {
+      var typeClass = activePuzzle.is_physical ? 'badge-physical' : 'badge-digital';
+      var typeName  = activePuzzle.is_physical ? 'Physical' : 'Digital';
+      badges.innerHTML = '<span class="badge ' + typeClass + '">' + typeName + '</span>' +
+                         '<span class="badge badge-pts">' + activePuzzle.points + ' pts</span>';
+    } else {
+      badges.innerHTML = '';
+    }
+
+    if (stage < currentStage) {
+      body.innerHTML = '<div class="done-notice">✅ Stage completed</div>';
+      overlay.classList.add('open');
+      return;
+    }
+
+    if (!activePuzzle || stage !== currentStage) {
+      body.innerHTML = '<div class="done-notice">🔒 Stage not yet unlocked</div>';
+      overlay.classList.add('open');
+      return;
+    }
+
+    var q = activePuzzle.question;
+    var lines = q.split('\n');
+    var textLines = [];
+    var driveLinks = [];
+
+    lines.forEach(function(line) {
+      if (line.indexOf('drive.google.com') !== -1) {
+        driveLinks.push(line.trim());
+      } else {
+        textLines.push(line);
+      }
+    });
+
+    var html = '';
+
+    if (textLines.join('\n').trim()) {
+      html += '<div class="puzzle-text">' + escapeHtml(textLines.join('\n')).replace(/\n/g, '<br>') + '</div>';
+    }
+
+    driveLinks.forEach(function(url) {
+      html += '<a href="' + escapeHtml(url) + '" target="_blank" class="drive-link">📎 Open Clue File →</a>';
+    });
+
+    if (activePuzzle.hint) {
+      html += '<div class="hint-box"><span class="hint-icon">💡</span><span class="hint-text">' + escapeHtml(activePuzzle.hint) + '</span></div>';
+    }
+
+    if (eventStatus === 'waiting') {
+      html += '<div class="done-notice">⏳ Hunt has not started yet.</div>';
+    } else if (eventStatus === 'ended') {
+      html += '<div class="done-notice">🔴 Hunt has ended. No more submissions.</div>';
+    } else {
+      html += '<div class="answer-label">Your Answer</div>';
+      html += '<form method="POST" action="/submit"><div class="answer-row">';
+      html += '<input class="answer-input" type="text" name="answer" placeholder="Type your answer here..." autocomplete="off" required />';
+      html += '<button type="submit" class="submit-btn">Submit →</button>';
+      html += '</div></form>';
+    }
+
+    if (flashMessage) {
+      html += '<div class="message ' + (flashCorrect ? 'msg-correct' : 'msg-wrong') + '">' + escapeHtml(flashMessage) + '</div>';
+      flashMessage = null;
+    }
+
+    body.innerHTML = html;
+    overlay.classList.add('open');
+
+    var inp = body.querySelector('.answer-input');
+    if (inp) setTimeout(function(){ inp.focus(); }, 50);
+  }
+
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('open');
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('overlay')) closeModal();
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  {% if message is defined and message and puzzle %}
+  window.addEventListener('DOMContentLoaded', function() {
+    openModal({{ puzzle['stage'] }});
+  });
+  {% endif %}
+
+  function updateTimer() {
+    if (eventStatus !== 'running') return;
+    if (timeRemaining <= 0) {
+      document.getElementById('timerNum').textContent = '00:00:00';
+      document.getElementById('timerLabel').textContent = '🔴 Hunt Ended';
+      document.getElementById('timerNum').className = 'timer-num timer-ended';
+      return;
+    }
+    timeRemaining--;
+    var h = Math.floor(timeRemaining / 3600);
+    var m = Math.floor((timeRemaining % 3600) / 60);
+    var s = timeRemaining % 60;
+    document.getElementById('timerNum').textContent =
+      (h < 10 ? '0' : '') + h + ':' +
+      (m < 10 ? '0' : '') + m + ':' +
+      (s < 10 ? '0' : '') + s;
+  }
+  setInterval(updateTimer, 1000);
+
+  setInterval(function() {
+    fetch('/api/timer')
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        var label = document.getElementById('timerLabel');
+        var num   = document.getElementById('timerNum');
+
+        // Only sync time if drift is more than 3 seconds — prevents reset flicker
+        if (Math.abs(data.remaining - timeRemaining) > 3) {
+          timeRemaining = data.remaining;
+        }
+
+        // Always update status if it changed
+        if (data.status !== eventStatus) {
+          eventStatus = data.status;
+          timeRemaining = data.remaining;
+          if (data.status === 'running') {
+            label.textContent = '⏱️ Time Left';
+            num.className = 'timer-num timer-running';
+          } else if (data.status === 'ended') {
+            label.textContent = '🔴 Hunt Ended';
+            num.className = 'timer-num timer-ended';
+            num.textContent = '00:00:00';
+          } else {
+            label.textContent = '⏳ Waiting...';
+            num.className = 'timer-num timer-waiting';
+          }
+        }
+      });
+  }, 30000);
+</script>
+
+</body>
+</html>

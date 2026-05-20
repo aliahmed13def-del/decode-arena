@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: #0a0a0f;
+      color: #cccccc;
+      min-height: 100vh;
+    }
+
+    .navbar {
+      background: #111118;
+      border-bottom: 0.5px solid #ff003330;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-title {
+      font-size: 14px;
+      color: #ff5555;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+      color: #444;
+      letter-spacing: 1px;
+    }
+
+    .main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+
+    /* ── TIMER CONTROL ── */
+    .timer-control {
+      background: #111118;
+      border: 0.5px solid #ff003325;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .timer-left h2 {
+      font-size: 12px;
+      color: #555;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .big-timer {
+      font-size: 48px;
+      font-weight: bold;
+      letter-spacing: 4px;
+      line-height: 1;
+    }
+
+    .timer-waiting { color: #555; }
+    .timer-running { color: #00ff88; }
+    .timer-ended   { color: #ff5555; }
+
+    .timer-status {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+
+    .status-waiting { color: #555; }
+    .status-running { color: #00ff88; }
+    .status-ended   { color: #ff5555; }
+
+    .timer-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-start  { background: #00ff88; color: #0a0a0f; }
+    .btn-stop   { background: #ff003330; color: #ff5555; border: 0.5px solid #ff003344; }
+    .btn-reset  { background: transparent; color: #555; border: 0.5px solid #333; }
+    .btn-danger { background: #ff003320; color: #ff5555; border: 0.5px solid #ff003340; font-size: 11px; padding: 8px 14px; }
+    .btn-safe   { background: #00ff8820; color: #00ff88; border: 0.5px solid #00ff8840; font-size: 11px; padding: 8px 14px; }
+
+    .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: #111118;
+      border: 0.5px solid #1a1a1a;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 28px;
+      font-weight: bold;
+      color: #00ff88;
+    }
+
+    .stat-lbl {
+      font-size: 10px;
+      color: #444;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* ── SECTION TITLE ── */
+    .section-title {
+      font-size: 11px;
+      color: #444;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 0.5px solid #1a1a1a;
+    }
+
+    /* ── TEAMS TABLE ── */
+    .table-card {
+      background: #111118;
+      border: 0.5px solid #1a1a1a;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .table-header {
+      display: grid;
+      grid-template-columns: 40px 1fr 70px 80px 80px 80px 160px;
+      padding: 10px 16px;
+      background: #0a0a0f;
+      border-bottom: 0.5px solid #1a1a1a;
+      font-size: 9px;
+      color: #444;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .table-row {
+      display: grid;
+      grid-template-columns: 40px 1fr 70px 80px 80px 80px 160px;
+      padding: 12px 16px;
+      border-bottom: 0.5px solid #111;
+      align-items: center;
+      font-size: 12px;
+      transition: background 0.15s;
+    }
+
+    .table-row:last-child { border-bottom: none; }
+    .table-row:hover { background: #ffffff03; }
+
+    .table-row.disqualified { opacity: 0.4; }
+
+    .rank-cell { color: #444; font-size: 12px; }
+    .name-cell { color: #ccc; letter-spacing: 1px; text-transform: uppercase; }
+    .trail-pill {
+      display: inline-block;
+      font-size: 9px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+    }
+    .pill-Green { background: #00ff8815; color: #00ff88; }
+    .pill-Blue  { background: #0088ff15; color: #0088ff; }
+    .pill-Red   { background: #ff003315; color: #ff5555; }
+
+    .score-cell   { color: #00ff88; font-weight: bold; text-align: right; }
+    .puzzles-cell { color: #555; text-align: right; }
+    .stage-cell   { color: #555; text-align: right; }
+
+    .action-cell {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    /* ── SUBMISSIONS LOG ── */
+    .log-card {
+      background: #111118;
+      border: 0.5px solid #1a1a1a;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .log-header {
+      display: grid;
+      grid-template-columns: 1fr 80px 80px 80px 140px;
+      padding: 10px 16px;
+      background: #0a0a0f;
+      border-bottom: 0.5px solid #1a1a1a;
+      font-size: 9px;
+      color: #444;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .log-row {
+      display: grid;
+      grid-template-columns: 1fr 80px 80px 80px 140px;
+      padding: 10px 16px;
+      border-bottom: 0.5px solid #111;
+      font-size: 11px;
+      align-items: center;
+    }
+
+    .log-row:last-child { border-bottom: none; }
+    .log-ans  { color: #888; font-family: 'Courier New', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .log-team { color: #ccc; text-transform: uppercase; font-size: 10px; }
+    .log-trail{ font-size: 10px; }
+    .log-stage{ color: #555; text-align: center; }
+    .log-ok   { color: #00ff88; font-weight: bold; letter-spacing: 1px; }
+    .log-fail { color: #ff5555; font-weight: bold; letter-spacing: 1px; }
+    .log-time { color: #333; font-size: 10px; }
+
+    /* ── IP INFO ── */
+    .ip-card {
+      background: #111118;
+      border: 0.5px solid #ffd70020;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ip-label {
+      font-size: 10px;
+      color: #555;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .ip-value {
+      font-size: 18px;
+      color: #ffd700;
+      letter-spacing: 2px;
+    }
+
+    .ip-note {
+      font-size: 11px;
+      color: #444;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+  <span class="nav-title">⚙️ Admin Panel</span>
+  <div class="nav-right">
+    <span>Developers Day 2026</span>
+    <span>|</span>
+    <span>Digital Scavenger Hunt</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- IP SHARE INFO -->
+  <div class="ip-card">
+    <div>
+      <div class="ip-label">Share this URL with all teams</div>
+      <div class="ip-value">http://YOUR-IP:5000</div>
+    </div>
+    <div class="ip-note">
+      Run <code>ipconfig</code> in terminal to find your IP
+    </div>
+  </div>
+
+  <!-- TIMER CONTROL -->
+  <div class="timer-control">
+    <div class="timer-left">
+      <h2>Event Timer</h2>
+      <div class="big-timer timer-{{ event_status }}" id="adminTimer">
+        {{ '%02d'|format(time_remaining // 3600) }}:{{
+           '%02d'|format((time_remaining % 3600) // 60) }}:{{
+           '%02d'|format(time_remaining % 60) }}
+      </div>
+      <div class="timer-status status-{{ event_status }}">
+        {{ '⏳ Waiting to start' if event_status == 'waiting'
+           else '🟢 Hunt is running' if event_status == 'running'
+           else '🔴 Hunt has ended' }}
+      </div>
+    </div>
+
+    <div class="timer-btns">
+      {% if event_status == 'waiting' %}
+      <form method="POST" action="/admin?key={{ admin_key }}">
+        <input type="hidden" name="action" value="start">
+        <button type="submit" class="btn btn-start">
+          ▶ Start Hunt
+        </button>
+      </form>
+
+      {% elif event_status == 'running' %}
+      <form method="POST" action="/admin?key={{ admin_key }}">
+        <input type="hidden" name="action" value="stop">
+        <button type="submit" class="btn btn-stop">
+          ⏹ End Hunt
+        </button>
+      </form>
+      {% endif %}
+
+      <form method="POST" action="/admin?key={{ admin_key }}">
+  <input type="hidden" name="action" value="reset_event">
+  <button type="submit" class="btn btn-reset">
+    ↺ Reset Timer
+  </button>
+</form>
+
+<form method="POST" action="/admin?key={{ admin_key }}"
+      onsubmit="return confirm('Reset ALL teams? This clears every score and stage!')">
+  <input type="hidden" name="action" value="reset_all">
+  <button type="submit" class="btn btn-danger" style="width:100%">
+    ⚠ Reset All Teams
+  </button>
+</form>
+    </div>
+  </div>
+
+  <!-- LIVE STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num">{{ teams|length }}</div>
+      <div class="stat-lbl">Total Teams</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">
+        {{ teams|selectattr('puzzles_solved', 'gt', 0)|list|length }}
+      </div>
+      <div class="stat-lbl">Active Teams</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ submissions|length }}</div>
+      <div class="stat-lbl">Submissions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">
+        {{ submissions|selectattr('is_correct', 'equalto', 1)|list|length }}
+      </div>
+      <div class="stat-lbl">Correct</div>
+    </div>
+  </div>
+
+  <!-- TEAMS TABLE -->
+  <div class="section-title">Live Team Status</div>
+  <div class="table-card">
+    <div class="table-header">
+      <span>#</span>
+      <span>Team</span>
+      <span>Trail</span>
+      <span style="text-align:right">Score</span>
+      <span style="text-align:right">Solved</span>
+      <span style="text-align:right">Stage</span>
+      <span style="text-align:right">Actions</span>
+    </div>
+
+    {% for team in teams %}
+    <div class="table-row {{ 'disqualified' if team['disqualified'] }}">
+      <span class="rank-cell">#{{ loop.index }}</span>
+
+      <span class="name-cell">
+        {{ team['team_name'] }}
+        {% if team['disqualified'] %}
+        <span style="color:#ff5555;font-size:10px"> [DQ]</span>
+        {% endif %}
+      </span>
+
+      <span>
+        <span class="trail-pill pill-{{ team['trail'] }}">
+          {{ team['trail'] }}
+        </span>
+      </span>
+
+      <span class="score-cell">{{ "%.1f"|format(team['score']) }}</span>
+      <span class="puzzles-cell">{{ team['puzzles_solved'] }}</span>
+      <span class="stage-cell">{{ team['current_stage'] }}</span>
+
+      <div class="action-cell">
+        {% if not team['disqualified'] %}
+        <form method="POST" action="/admin?key={{ admin_key }}"
+              style="display:inline">
+          <input type="hidden" name="action" value="disqualify">
+          <input type="hidden" name="team_id" value="{{ team['id'] }}">
+          <button type="submit" class="btn btn-danger">DQ</button>
+        </form>
+        {% else %}
+        <form method="POST" action="/admin?key={{ admin_key }}"
+              style="display:inline">
+          <input type="hidden" name="action" value="reinstate">
+          <input type="hidden" name="team_id" value="{{ team['id'] }}">
+          <button type="submit" class="btn btn-safe">Reinstate</button>
+        </form>
+        {% endif %}
+
+        <form method="POST" action="/admin?key={{ admin_key }}"
+              style="display:inline"
+              onsubmit="return confirm('Reset {{ team['team_name'] }}?')">
+          <input type="hidden" name="action" value="reset_team">
+          <input type="hidden" name="team_id" value="{{ team['id'] }}">
+          <button type="submit" class="btn btn-reset">Reset</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- RECENT SUBMISSIONS -->
+  <div class="section-title">Recent Submissions (last 50)</div>
+  <div class="log-card">
+    <div class="log-header">
+      <span>Answer</span>
+      <span>Team</span>
+      <span>Trail</span>
+      <span style="text-align:center">Stage</span>
+      <span>Time</span>
+    </div>
+
+    {% for sub in submissions %}
+    <div class="log-row">
+      <span class="log-ans">{{ sub['answer_given'] }}</span>
+      <span class="log-team">{{ sub['team_name'] }}</span>
+      <span class="log-trail">
+        <span class="trail-pill pill-{{ sub['trail'] }}">
+          {{ sub['trail'] }}
+        </span>
+      </span>
+      <span class="log-stage">{{ sub['stage'] }}</span>
+      <span class="{{ 'log-ok' if sub['is_correct'] else 'log-fail' }}">
+        {{ 'Correct' if sub['is_correct'] else 'Wrong' }}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<script>
+  // Live timer countdown on admin page
+  var remaining = {{ time_remaining }};
+  var status = '{{ event_status }}';
+
+  function updateTimer() {
+    if (status !== 'running') return;
+    if (remaining <= 0) {
+      document.getElementById('adminTimer').textContent = '00:00:00';
+      return;
+    }
+    remaining--;
+    var h = Math.floor(remaining / 3600);
+    var m = Math.floor((remaining % 3600) / 60);
+    var s = remaining % 60;
+    document.getElementById('adminTimer').textContent =
+      (h < 10 ? '0' : '') + h + ':' +
+      (m < 10 ? '0' : '') + m + ':' +
+      (s < 10 ? '0' : '') + s;
+  }
+
+  setInterval(updateTimer, 1000);
+
+  // Soft sync every 30s — only corrects drift, never hard reloads
+  setInterval(function() {
+    fetch('/api/timer')
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (Math.abs(data.remaining - remaining) > 3) {
+          remaining = data.remaining;
+        }
+        if (data.status !== status) {
+          status = data.status;
+          remaining = data.remaining;
+        }
+      });
+  }, 30000);
+</script>
+
+</body>
+</html>
